@@ -1,19 +1,17 @@
 
 CFLAGS = -g
+LDLIBS= -pthread
 
-all: pipe_lat pipe_thr \
+
+all: common_lat common_thr \
+	pipe_lat pipe_thr \
 	unix_lat unix_thr \
 	tcp_lat tcp_thr \
 	tcp_local_lat tcp_remote_lat \
 	shm
 
 run:
-	./pipe_lat 100 10000
-	./unix_lat 100 10000
-	./tcp_lat 100 10000
-	./pipe_thr 100 10000
-	./unix_thr 100 10000
-	./tcp_thr 100 10000
+	./run.sh
 
 clean:
 	rm -f *~ core
@@ -21,4 +19,5 @@ clean:
 	rm -f unix_lat unix_thr 
 	rm -f tcp_lat tcp_thr 
 	rm -f tcp_local_lat tcp_remote_lat
+	rm -f common_lat common_thr
 	rm -f shm 
