@@ -4,11 +4,13 @@ ipc-bench
 Some very crude IPC benchmarks.
 
 ping-pong latency benchmarks:
+* common memory space (threads)
 * pipes
 * unix domain sockets
 * tcp sockets
 
 throughput benchmarks:
+* common memory space (threads)
 * pipes
 * unix doamin sockets
 * tcp sockets
