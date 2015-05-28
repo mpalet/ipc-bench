@@ -71,7 +71,7 @@ int localread(int fd, char *in, char * out, int size) {
 }
 
 int localwrite(int fd, char *in, char * out, int size) {
-  memcpy(out, in, size);
+  //memcpy(out, in, size);
 
   write[fd] = 1;
   while (!read[fd])

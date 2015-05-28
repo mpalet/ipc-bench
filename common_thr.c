@@ -53,7 +53,7 @@ void *threadfn(char *in) {
 int localread(char *in, char * out, int size) {
   int nbytes;
   
-  while(!write)
+  while(!write);
     sleep(0);
 
   write = 0;
@@ -65,10 +65,10 @@ int localread(char *in, char * out, int size) {
 }
 
 int localwrite(char *in, char * out, int size) {
-  memcpy(out, in, size);
+  //memcpy(out, in, size);
 
   write = 1;
-  while (!read)
+  while (!read);
     sleep(0);
 
   read = 0;

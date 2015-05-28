@@ -71,12 +71,18 @@ int main(int argc, char *argv[])
       int left = size;
       int err;
       while (left > 0) {
-        if ( (err = read(fds[1], buf, size)) == -1 ) {
+        if ( (err = read(fds[1], buf, left)) == -1 ) {
           perror("read");
           exit(1);
         }
         left -= err;
       }
+      /*int len;
+      len = read(fds[1], buf, size);
+      if ((len == -1) || (len != size)) {
+        perror("read");
+        exit(1);
+      }*/
     }
   } else { 
     /* parent */
