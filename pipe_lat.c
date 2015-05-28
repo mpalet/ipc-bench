@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     delta = ((stop.tv_sec - start.tv_sec) * (int64_t) 1000000 +
 	     stop.tv_usec - start.tv_usec);
     
-    printf("average latency: %lli us\n", delta / (count * 2));
+    printf("average latency: %f us\n", (double)delta / (double)(count * 2));
 
   }
   

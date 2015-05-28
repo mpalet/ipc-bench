@@ -1,5 +1,5 @@
 /* 
-    Measure throughput of IPC using unix domain sockets.
+    Measure throughput of IPC using pipes
 
 
     Copyright (c) 2010 Erik Rigtorp <erik@rigtorp.com>
@@ -32,26 +32,69 @@
 #include <sys/socket.h>
 #include <time.h>
 #include <stdint.h>
+#include <pthread.h>
 
+int read, write;
+int size;
+char *in, *out;
+int64_t count, i, delta;
+
+void *threadfn(char *in) {
+  int i;
+
+  for (i = 0; i < count; i++) {      
+      if (localread(out, in, size) != size) {
+        perror("read");
+        exit(1);
+      }
+    }
+}
+
+int localread(char *in, char * out, int size) {
+  int nbytes;
+  
+  while(!write)
+    sleep(0);
+
+  write = 0;
+
+  memcpy(out, in, size);
+
+  read = 1;
+  return size;
+}
+
+int localwrite(char *in, char * out, int size) {
+  memcpy(out, in, size);
+
+  write = 1;
+  while (!read)
+    sleep(0);
+
+  read = 0;
+  return size;
+}
 
 int main(int argc, char *argv[])
 {
-  int fds[2]; /* the pair of socket descriptors */
-  int size;
-  char *buf;
-  int64_t count, i, delta;
   struct timeval start, stop;
 
+  pthread_t thread;
+
+
   if (argc != 3) {
-    printf ("usage: unix_thr <message-size> <message-count>\n");
+    printf ("usage: common_thr <message-size> <message-count>\n");
     exit(1);
   }
-  
+
+  read = 0;
+  write = 0;
   size = atoi(argv[1]);
   count = atol(argv[2]);
 
-  buf = malloc(size);
-  if (buf == NULL) {
+  in = malloc(size);
+  out = malloc(size);
+  if ((in == NULL) || (out == NULL)) {
     perror("malloc");
     exit(1);
   }
@@ -59,45 +102,28 @@ int main(int argc, char *argv[])
   printf("message size: %i octets\n", size);
   printf("message count: %lli\n", count);
 
-  if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) == -1) {
-    perror("socketpair");
-    exit(1);
+
+  pthread_create(&thread, NULL, threadfn, (void *)in);
+
+  /* parent */
+
+  gettimeofday(&start, NULL);
+
+  for (i = 0; i < count; i++) {
+    if (localwrite(in, out, size) != size) {
+      perror("write");
+      exit(1);
+    }
   }
-  
-  if (!fork()) {  
-    /* child */
 
-    for (i = 0; i < count; i++) {      
-      int left = size;
-      int err;
-      while (left > 0) {
-        if ( (err = read(fds[1], buf, size)) == -1 ) {
-          perror("read");
-          exit(1);
-        }
-        left -= err;
-      }
-    }
-  } else { 
-    /* parent */
-  
-    gettimeofday(&start, NULL);
+  gettimeofday(&stop, NULL);
 
-    for (i = 0; i < count; i++) {
-      if (write(fds[0], buf, size) != size) {
-        perror("write");
-        exit(1);
-      }
-    }
-
-    gettimeofday(&stop, NULL);
-    
     delta = ((stop.tv_sec - start.tv_sec) * (int64_t) 1e6 +
 	     stop.tv_usec - start.tv_usec);
-    
-    printf("average throughput: %lli msg/s\n", (count * (int64_t) 1e6) / delta);
-    printf("average throughput: %lli Mb/s\n", (((count * (int64_t) 1e6) / delta) * size * 8) / (int64_t) 1e6);
-  }
+
+  printf("average throughput: %lli msg/s\n", (count * (int64_t) 1e6) / delta);
+  printf("average throughput: %lli Mb/s\n", (((count * (int64_t) 1e6) / delta) * size * 8) / (int64_t) 1e6);
+  
   
   return 0;
 }
